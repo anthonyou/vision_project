@@ -15,7 +15,7 @@ home_dir = '/data/vision/torralba/scratch/aou/vision_project'
 exp_count = len(os.listdir(f'{home_dir}/experiment_images'))-1
 assert os.path.isdir(f'{home_dir}/experiment_images/experiment_{exp_count:05}/grad_descent_samples')
 
-loss_cutoff = 50000
+loss_cutoff = 200000
 with open(f'{home_dir}/experiment_images/experiment_{exp_count:05}/config.txt', 'a') as f:
     f.write(f'Loss cutoff: {loss_cutoff}\n')
 
