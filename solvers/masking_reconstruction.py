@@ -1,5 +1,5 @@
 from base_solver import BaseSolver
 
-class Img2ImgSolver(BaseSolver):
+class MaskingReconstructionSolver(BaseSolver):
   def solve(self):
     raise Exception("TODO")

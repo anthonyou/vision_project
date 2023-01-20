@@ -54,7 +54,10 @@ class BaseProblemTransferMatrix2DObsGaussianNoise(BaseProblem):
   def forward_process(self):
     assert not self.img is None
     noiseless_obs = self.A_mat @ (self.img.reshape(-1))
-    obs = noiseless_obs + np.random.normal(scale=self.gaussian_noise_std, size=noiseless_obs.shape)
+    if self.gaussian_noise_std > 0:
+      obs = noiseless_obs + np.random.normal(scale=self.gaussian_noise_std, size=noiseless_obs.shape)
+    else:
+      obs = noiseless_obs
     obs = obs.reshape(self.C, *self.obs_size)
     return obs
 

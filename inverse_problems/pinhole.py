@@ -3,7 +3,7 @@ from my_python_utils.common_utils import *
 from base_problems import *
 import numpy as np
 
-class Pinhole(BaseProblemTransferMatrix2DObsGaussianNoise):
+class PinholeProblem(BaseProblemTransferMatrix2DObsGaussianNoise):
   def construct_A_mat(self):
     # todo: change to sparse.lil_matrix
     A_mat_without_C = np.zeros((self.obs_size[0] * self.obs_size[1],

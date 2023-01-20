@@ -10,7 +10,7 @@ class ColorizationProblem(BaseProblemTransferMatrix2DObsGaussianNoise):
 
 if __name__ == '__main__':
   img = np.array(cv2_imread('img_examples/pug.png'), dtype='float32')
-  img = cv2_resize(img, (64,64)) / 255.0
+  img = cv2_resize(img, (32,32)) / 255.0
 
   inverse_problem = ColorizationProblem(img=img, obs_size=img.shape[1:], gaussian_noise_std=0.05)
   obs = inverse_problem.forward_process()
