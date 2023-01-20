@@ -1,3 +1,3 @@
-from inverse_problems.base_problem import *
+from inverse_problems.base_problems import *
 
 

@@ -73,6 +73,7 @@ x = norm_img.flatten()
 N = x.shape[0]
 print(N)
 # select random set of indices of A that will be zero, to make A non-invertible and simulate an ill-posed forward problem
+
 rng = default_rng(123)
 A = sparse.random(N, N, density=0.0001, format='coo', dtype=None, random_state=rng, data_rvs=None)
 obs = A @ x
