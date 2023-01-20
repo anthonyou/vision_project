@@ -1,3 +1,5 @@
+from my_python_utils.common_utils import *
+
 from base_problem import BaseProblem
 import numpy as np
 
@@ -19,3 +21,6 @@ class RandomProjectionWithGaussianNoise(BaseProblem):
     inv_mat = np.linalg.inv(self.A_mat)
 
     return inv_mat @ self.obs.reshape(-1)
+
+if __name__ == '__main__':
+  img = cv

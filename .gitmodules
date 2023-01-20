@@ -1,0 +1,3 @@
+[submodule "my_python_utils"]
+	path = my_python_utils
+	url = git@github.com:mbaradad/my_python_utils.git
