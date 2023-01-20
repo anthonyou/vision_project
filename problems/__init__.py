@@ -4,7 +4,7 @@ from .inpainting import InpaintingProblem
 from .pinhole import PinholeProblem
 from .random_projection import RandomProjectionProblem
 
-inverse_problems = {'colorization': ColorizationProblem,
+problems = {'colorization': ColorizationProblem,
             'identity': IdentityProblem,
             'inpainting': InpaintingProblem,
             'pinhole': PinholeProblem,
