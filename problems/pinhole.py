@@ -1,6 +1,4 @@
-from my_python_utils.common_utils import *
-
-from base_problems import *
+from problems.base_problems import *
 import numpy as np
 
 class PinholeProblem(BaseProblemTransferMatrix2DObsGaussianNoise):
@@ -39,8 +37,8 @@ if __name__ == '__main__':
   img = np.array(cv2_imread('img_examples/pug.png'), dtype='float32')
   img = cv2_resize(img, (64,64)) / 255.0
 
-  inverse_problem = Pinhole(img=img, obs_size=img.shape[1:], gaussian_noise_std=0.05)
-  obs = inverse_problem.forward_process()
+  inverse_problem = PinholeProblem(img=img, obs_size=img.shape[1:], gaussian_noise_std=0.05)
+  obs = inverse_problem.forward()
   imshow(img, title='img')
   imshow(obs, title='obs')
 

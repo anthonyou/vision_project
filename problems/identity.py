@@ -1,4 +1,4 @@
-from base_problems import *
+from problems.base_problems import *
 
 
 class IdentityProblem(BaseProblemTransferMatrix2DObsGaussianNoise):

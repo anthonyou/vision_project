@@ -27,7 +27,7 @@ class BaseProblem():
 
       self.C = self.img.shape[0]
 
-  def forward_process(self):
+  def forward(self):
     raise Exception("Must be implemented by children class")
 
   def explicit_solve(self):
@@ -51,7 +51,7 @@ class BaseProblemTransferMatrix2DObsGaussianNoise(BaseProblem):
   def construct_A_mat(self):
     raise Exception("Needs to be implemented by base class")
 
-  def forward_process(self):
+  def forward(self):
     assert not self.img is None
     noiseless_obs = self.A_mat @ (self.img.reshape(-1))
     if self.gaussian_noise_std > 0:
@@ -64,7 +64,7 @@ class BaseProblemTransferMatrix2DObsGaussianNoise(BaseProblem):
   def explicit_solve(self):
     if self.obs_size == self.img_size:
       if self.obs is None:
-        obs = self.forward_process()
+        obs = self.forward()
       else:
         obs = self.obs
       if type(self.A_mat) is np.ndarray:

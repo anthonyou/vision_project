@@ -1,6 +1,4 @@
-from my_python_utils.common_utils import *
-
-from base_problems import *
+from problems.base_problems import *
 from scipy import sparse
 
 from numpy.random import default_rng
@@ -19,7 +17,7 @@ if __name__ == '__main__':
   noise_std = 0
 
   inverse_problem = RandomProjectionProblem(img=img, obs_size=img.shape[1:], gaussian_noise_std=noise_std)
-  obs = inverse_problem.forward_process()
+  obs = inverse_problem.forward()
   imshow(img, title='img', biggest_dim=256)
   imshow(obs, title='obs', biggest_dim=256)
 

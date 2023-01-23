@@ -1,4 +1,4 @@
-from base_problems import *
+from problems.base_problems import *
 
 # simply sums over channel dimension with a transfer matrix
 class ColorizationProblem(BaseProblemTransferMatrix2DObsGaussianNoise):
@@ -13,7 +13,7 @@ if __name__ == '__main__':
   img = cv2_resize(img, (32,32)) / 255.0
 
   inverse_problem = ColorizationProblem(img=img, obs_size=img.shape[1:], gaussian_noise_std=0.05)
-  obs = inverse_problem.forward_process()
+  obs = inverse_problem.forward()
   imshow(img, title='img')
   imshow(obs, title='obs')
 
