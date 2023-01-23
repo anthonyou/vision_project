@@ -24,7 +24,7 @@ exp_count = len(os.listdir(f'{home_dir}/experiment_images'))-1
 assert os.path.isdir(f'{home_dir}/experiment_images/experiment_{exp_count:05}/img2img_samples')
 
 config = {
-    'prompt': 'clear photograph of a sitting pug puppy',
+    'prompt': 'a clear photograph of a sitting pug puppy',
     'init-img': f'{home_dir}/classical_images/recovered_extra_noisy_obs.jpeg',
     'outdir': f'{home_dir}/experiment_images/experiment_{exp_count:05}',
     'skip_grid': False,
@@ -36,7 +36,7 @@ config = {
     'f': 8,
     'n_samples': 1,
     'scale': 5.0,
-    'strength': 0.5,
+    'strength': 0.9,
     'decay_rate': 0.99,
     'min_strength': 0.01,
     'config': f'{home_dir}/stable_diffusion/v1-inference.yaml',
@@ -106,7 +106,7 @@ def get_img2img_iterator():
             init_filename = config['init-img']
         print('Loading image from:', init_filename)
         assert os.path.isfile(init_filename)
-        init_image = load_img(config['init-img']).to(device)
+        init_image = load_img(init_filename).to(device)
         init_image = repeat(init_image, '1 ... -> b ...', b=batch_size)
         init_latent = model.get_first_stage_encoding(model.encode_first_stage(init_image))  # move to latent space
 
