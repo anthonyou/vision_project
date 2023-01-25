@@ -11,7 +11,8 @@ import scipy.sparse.linalg as linalg
 from numpy.random import default_rng
 import torch
 
-home_dir = '/data/vision/torralba/movies_sfm/home/aou'
+home_dir = '/data/vision/torralba/scratch/aou/vision_project'
+device = 0
 
 def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
     dim = None
@@ -96,7 +97,8 @@ if implicit_invert:
     start_img = image_resize(start_img, L, L)
     norm_start_img = normalize_and_show_image(start_img, 'start_image.jpeg')
     
-    inverse = move_to_obs(norm_start_img, obs_with_noise, A, T =100000, lr=5, save_intermediate=True)
+    with torch.cuda.device(device):
+        inverse = move_to_obs(norm_start_img, obs_with_noise, A, T =100000, lr=5, save_intermediate=True)
     norm_recovered_noisy_obs = normalize_and_show_image(inverse, 'recovered_noisy_obs.jpeg')
 
 explicit_invert = False

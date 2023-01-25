@@ -2,7 +2,7 @@ import os
 # Manel: Hardcoded visdom environment. I have this on my path, but we can use the same.
 # you need to launch the following command, if it's not already running:
 # results are displayed in http://visiongpu09.csail.mit.edu:12890/, by selecting the corresponding visdom_environment
-os.environ['VISDOM_HOST'] = 'visiongpu09'
+os.environ['VISDOM_HOST'] = 'visiongpu38'
 visdom_environment = 'inverse_vision_' + os.environ['USER']
 
 from my_python_utils.common_utils import *
@@ -12,9 +12,9 @@ from solvers import solvers
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Main method')
   parser.add_argument("--img-file", type=str, default='img_examples/pug.png', help="img path to test")
-  parser.add_argument('--img-size', type=int, default=32)
+  parser.add_argument('--img-size', type=int, default=512)
   parser.add_argument('--problem-type', type=str, default='random_projection', choices=problems.keys())
-  parser.add_argument('--solver-method', type=str, default='explicit', choices=solvers.keys())
+  parser.add_argument('--solver-method', type=str, default='img2img', choices=solvers.keys())
   parser.add_argument('--seed', default=1337, type=int)
 
   # params for img2img solver, ignored if other method is used

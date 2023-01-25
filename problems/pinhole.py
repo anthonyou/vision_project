@@ -39,8 +39,8 @@ if __name__ == '__main__':
 
   inverse_problem = PinholeProblem(img=img, obs_size=img.shape[1:], gaussian_noise_std=0.05)
   obs = inverse_problem.forward()
-  imshow(img, title='img')
-  imshow(obs, title='obs')
+  #imshow(img, title='img')
+  #imshow(obs, title='obs')
 
   recovered_img = inverse_problem.explicit_solve()
-  imshow(recovered_img, title='recovered_img')
+  #imshow(recovered_img, title='recovered_img')

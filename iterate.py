@@ -1,7 +1,7 @@
 import torch
 import os
 
-device = 0
+device = 2
 
 image_dir = '/data/vision/torralba/scratch/aou/vision_project/experiment_images'
 assert os.path.isdir(image_dir)

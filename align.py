@@ -12,10 +12,11 @@ from numpy.random import default_rng
 import os
 
 home_dir = '/data/vision/torralba/scratch/aou/vision_project'
+obs_filename = f'{home_dir}/classical_images/obs_with_extra_noise.npy'
 exp_count = len(os.listdir(f'{home_dir}/experiment_images'))-1
 assert os.path.isdir(f'{home_dir}/experiment_images/experiment_{exp_count:05}/grad_descent_samples')
 
-loss_cutoff = 50000
+loss_cutoff = 150000
 with open(f'{home_dir}/experiment_images/experiment_{exp_count:05}/config.txt', 'a') as f:
     f.write(f'Loss cutoff: {loss_cutoff}\n')
 
@@ -62,7 +63,7 @@ def move_to_obs(recovered_img, true_obs, A, lr=0.0005):
         recovered_img.grad.zero_()
     return recovered_img.detach().cpu().numpy()
 
-noisy_obs = np.load(f'{home_dir}/classical_images/obs_with_noise.npy')
+noisy_obs = np.load(obs_filename)
 
 N = noisy_obs.flatten().shape[0]
 rng = default_rng(123)
