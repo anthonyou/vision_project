@@ -16,8 +16,29 @@ from pytorch_lightning import seed_everything
 from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
-from base_solver import BaseSolver
+from solvers.base_solver import BaseSolver
+from solvers.sgd import StochasticGradDescSolver
 
+home_dir = '/data/vision/torralba/scratch/aou/vision_project'
+config = {
+    'prompt': 'a clear photograph of a sitting pug puppy',
+    'skip_grid': False,
+    'ddim_steps': 50,
+    'fixed_code': False,
+    'ddim_eta': 0.0,
+    'n_iter': 1,
+    'C': 4,
+    'f': 8,
+    'n_samples': 1,
+    'scale': 5.0,
+    'strength': 0.9,
+    'decay_rate': 0.99,
+    'min_strength': 0.01,
+    'config': f'{home_dir}/stable_diffusion/v1-inference.yaml',
+    'ckpt': f'{home_dir}/stable_diffusion/model.ckpt',
+    'seed': 42,
+    'precision': 'autocast'
+}
 
 def load_model_from_config(config, ckpt, verbose=False):
     print(f"Loading model from {ckpt}")
@@ -56,8 +77,8 @@ class Img2ImgSolver(BaseSolver):
     Solver using stablediffusion's img2img
     """
 
-    def __init__(self, config, problem):
-        super().__init__(self, problem)
+    def __init__(self, problem, verbose=False):
+        super().__init__(problem, verbose)
         self.config = config
         seed_everything(config['seed'])
         model_config = OmegaConf.load(config['config'])
@@ -68,8 +89,10 @@ class Img2ImgSolver(BaseSolver):
 
         self.sampler = DDIMSampler(self.model)
 
+        self.sgd = StochasticGradDescSolver(problem, verbose)
 
-    def solve(self, init_filename, strength=None):
+
+    def img2img(self, init_image, strength=None):
         batch_size = config['n_samples']
         n_rows = batch_size
         prompt = config['prompt']
@@ -77,7 +100,7 @@ class Img2ImgSolver(BaseSolver):
         model = self.model
         print('Constructing generator that uses prompt:', data)
 
-        init_image = load_img(init_filename).to(self.device)
+        init_image = init_image.to(self.device)
         init_image = repeat(init_image, '1 ... -> b ...', b=batch_size)
         init_latent = model.get_first_stage_encoding(model.encode_first_stage(init_image))
 
@@ -110,7 +133,17 @@ class Img2ImgSolver(BaseSolver):
                             x_samples = model.decode_first_stage(samples)
                             x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
         toc = time.time()
-        return x_samples[0]
+        return x_samples
+
+    def solve(self, obs=None):
+        if obs is None:
+            obs = self.problem.forward()
+        obs = torch.from_numpy(obs).unsqueeze(0)
+        img = torch.zeros(obs.shape)
+        for i in range(10):
+            img = self.sgd.solve(img, obs)
+            img = self.img2img(img).float()
+        return img[0], None
 
 if __name__ == "__main__":
     home_dir = '/data/vision/torralba/scratch/aou/vision_project'

@@ -7,8 +7,7 @@ class RandomProjectionProblem(BaseProblemTransferMatrix2DObsGaussianNoise):
   def construct_A_mat(self):
     rng = default_rng(124)
     self.A_mat = sparse.random(self.C * self.obs_size[0] * self.obs_size[1], self.C * self.img_size[0] * self.img_size[1],
-                               density=0.01, format='coo', dtype=None, data_rvs=None, random_state=rng)
-    self.A_mat = np.array(self.A_mat.todense())
+                               density=0.0001, format='coo', dtype=None, data_rvs=None, random_state=rng)
 
 if __name__ == '__main__':
   img = np.array(cv2_imread('img_examples/pug.png'), dtype='float32')
