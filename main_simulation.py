@@ -31,10 +31,12 @@ if __name__ == '__main__':
 
   reconstruction, logs = solver.solve()
 
-  imshow(img, title='gt', env=visdom_environment)
-  imshow(img, title='observation', env=visdom_environment)
+  imshow(img, title='image', env=visdom_environment)
+  imshow(obs, title='observation', env=visdom_environment)
   imshow(reconstruction, title='reconstruction', env=visdom_environment)
 
-  if args.solver_type == 'img2img':
+  if args.solver_method == 'img2img':
     # store intermediate iterations in logs, and plot them
-    imshow(tile_images(logs['recovered_image_per_iter']))
+    import pdb; pdb.set_trace()
+    imshow(tile_images(logs['sgd_per_iter']), title='sgd_iterations', env=visdom_environment)
+    imshow(tile_images(logs['img2img_per_iter']), title='img2img_iterations', env=visdom_environment)
