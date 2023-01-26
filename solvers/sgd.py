@@ -13,7 +13,7 @@ class StochasticGradDescSolver(BaseSolver):
     def __init__(self, problem, verbose=False):
         super().__init__(problem, verbose)
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        self.loss_cutoff = 150000
+        self.loss_cutoff = 50000
         self.lr = 0.0005
 
         A = problem.A_mat

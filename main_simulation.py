@@ -37,5 +37,5 @@ if __name__ == '__main__':
 
   if args.solver_method == 'img2img':
     # store intermediate iterations in logs, and plot them
-    imshow(tile_images(logs['sgd_per_iter']), title='sgd_iterations', env=visdom_environment)
-    imshow(tile_images(logs['img2img_per_iter']), title='img2img_iterations', env=visdom_environment)
+    imshow(tile_images(logs['sgd_per_iter']), title='sgd_iterations', env=visdom_environment+'_summary')
+    imshow(tile_images(logs['img2img_per_iter']), title='img2img_iterations', env=visdom_environment+'_summary')
