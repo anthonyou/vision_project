@@ -25,8 +25,8 @@ class StochasticGradDescSolver(BaseSolver):
         """
         img and obs are torch tensors and A is a torch sparse matrix
         """
-        recovered_img = img.detach()
-        recovered_img = img.to(self.device).requires_grad_(True)
+        recovered_img = img.detach() # Need this line or else img will be overwritten
+        recovered_img = recovered_img.to(self.device).requires_grad_(True)
         obs = obs.to(self.device).requires_grad_(False)
         A = self.A.to(self.device).requires_grad_(False)
 

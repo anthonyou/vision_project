@@ -139,14 +139,13 @@ class Img2ImgSolver(BaseSolver):
         if obs is None:
             obs = self.problem.forward()
         obs = torch.from_numpy(obs).unsqueeze(0)
-        img = torch.zeros(obs.shape)
+        img = torch.zeros(obs.shape).to(self.device)
         logs = {'sgd_per_iter': [], 'img2img_per_iter': []}
-        for i in range(3):
+        for i in range(100):
             sgd_img = self.sgd.solve(img, obs)
-            print(torch.sum(sgd_img - img))
             norm_img = torch.clamp(2*sgd_img-1, min=-1.0, max=1.0)
             img = self.img2img(norm_img, strength=0.9*(0.99**i)).float()
-            if i % 1 == 0:
+            if i % 10 == 0:
                 logs['sgd_per_iter'].append(sgd_img)
                 logs['img2img_per_iter'].append(img)
         return img[0], {k: torch.cat(v) for k, v in logs.items()}
