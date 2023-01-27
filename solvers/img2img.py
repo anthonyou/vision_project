@@ -22,6 +22,9 @@ from solvers.sgd import StochasticGradDescSolver
 home_dir = '/data/vision/torralba/scratch/aou/vision_project'
 config = {
     'prompt': 'a clear photograph of a sitting pug puppy',
+    'iterations': 101,
+    'loss_cutoff': 50000,
+    'learning_rate': 0.0005,
     'skip_grid': False,
     'ddim_steps': 50,
     'fixed_code': False,
@@ -31,7 +34,7 @@ config = {
     'f': 8,
     'n_samples': 1,
     'scale': 5.0,
-    'strength': 0.5,
+    'strength': 0.4,
     'decay_rate': 0.99,
     'min_strength': 0.01,
     'config': f'{home_dir}/stable_diffusion/v1-inference.yaml',
@@ -77,9 +80,8 @@ class Img2ImgSolver(BaseSolver):
     Solver using stablediffusion's img2img
     """
 
-    def __init__(self, problem, verbose=False):
-        super().__init__(problem, verbose)
-        self.config = config
+    def __init__(self, problem, config, verbose=False):
+        super().__init__(problem, config, verbose)
         seed_everything(config['seed'])
         model_config = OmegaConf.load(config['config'])
         model = load_model_from_config(model_config, config['ckpt'])
@@ -89,7 +91,7 @@ class Img2ImgSolver(BaseSolver):
 
         self.sampler = DDIMSampler(self.model)
 
-        self.sgd = StochasticGradDescSolver(problem, verbose)
+        self.sgd = StochasticGradDescSolver(problem, verbose, config)
 
 
     def img2img(self, init_image, strength=None):
@@ -141,10 +143,11 @@ class Img2ImgSolver(BaseSolver):
         obs = torch.from_numpy(obs).unsqueeze(0)
         img = torch.zeros(obs.shape).to(self.device)
         logs = {'sgd_per_iter': [], 'img2img_per_iter': []}
-        for i in range(100):
+        for i in range(config['iterations']):
             sgd_img = self.sgd.solve(img, obs)
             norm_img = torch.clamp(2*sgd_img-1, min=-1.0, max=1.0)
-            img = self.img2img(norm_img, strength=0.9*(0.99**i)).float()
+            strength = max(config['strength']*(config['decay_rate']**i), config['min_strength'])
+            img = self.img2img(norm_img, strength=strength).float()
             if i % 10 == 0:
                 logs['sgd_per_iter'].append(sgd_img)
                 logs['img2img_per_iter'].append(img)

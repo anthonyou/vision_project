@@ -1,13 +1,9 @@
 import os
-# Manel: Hardcoded visdom environment. I have this on my path, but we can use the same.
-# you need to launch the following command, if it's not already running:
-# results are displayed in http://visiongpu09.csail.mit.edu:12890/, by selecting the corresponding visdom_environment
-os.environ['VISDOM_HOST'] = 'visiongpu38'
-visdom_environment = 'inverse_vision_' + os.environ['USER']
 
 from my_python_utils.common_utils import *
 from problems import problems
 from solvers import solvers
+from solvers.config import configs
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Main method')
@@ -27,9 +23,17 @@ if __name__ == '__main__':
 
   problem = problems[args.problem_type](img=img, obs_size=img.shape[1:])
   obs = problem.forward()
-  solver = solvers[args.solver_method](problem, verbose=True)
+  config = configs[args.solver_method]
+  with torch.cuda.device(config['device']):
+    solver = solvers[args.solver_method](problem, config, verbose=True)
+    reconstruction, logs = solver.solve()
 
-  reconstruction, logs = solver.solve()
+  # Manel: Hardcoded visdom environment. I have this on my path, but we can use the same.
+  # you need to launch the following command, if it's not already running:
+  # results are displayed in http://visiongpu09.csail.mit.edu:12890/, by selecting the corresponding visdom_environment
+  
+  os.environ['VISDOM_HOST'] = 'visiongpu38'
+  visdom_environment = 'inverse_vision_' + os.environ['USER'] + '_' + config['device']
 
   imshow(img, title='image', env=visdom_environment)
   imshow(obs, title='observation', env=visdom_environment)
