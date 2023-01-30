@@ -19,7 +19,8 @@ from ldm.models.diffusion.plms import PLMSSampler
 from solvers.base_solver import BaseSolver
 from solvers.sgd import StochasticGradDescSolver
 
-home_dir = '/data/vision/torralba/scratch/aou/vision_project'
+# root_dir = '/data/vision/torralba/scratch/aou/vision_project'
+root_dir = '.'
 config = {
     'prompt': 'a clear photograph of a sitting pug puppy',
     'iterations': 101,
@@ -37,8 +38,8 @@ config = {
     'strength': 0.4,
     'decay_rate': 0.99,
     'min_strength': 0.01,
-    'config': f'{home_dir}/stable_diffusion/v1-inference.yaml',
-    'ckpt': f'{home_dir}/stable_diffusion/model.ckpt',
+    'config': f'{root_dir}/stable_diffusion/v1-inference.yaml',
+    'ckpt': f'{root_dir}/stable_diffusion/model.ckpt',
     'seed': 42,
     'precision': 'autocast'
 }
@@ -81,7 +82,7 @@ class Img2ImgSolver(BaseSolver):
     """
 
     def __init__(self, problem, config, verbose=False):
-        super().__init__(problem, config, verbose)
+        super().__init__(problem, config=config, verbose=verbose)
         seed_everything(config['seed'])
         model_config = OmegaConf.load(config['config'])
         model = load_model_from_config(model_config, config['ckpt'])
@@ -91,7 +92,7 @@ class Img2ImgSolver(BaseSolver):
 
         self.sampler = DDIMSampler(self.model)
 
-        self.sgd = StochasticGradDescSolver(problem, verbose, config)
+        self.sgd = StochasticGradDescSolver(problem, verbose)
 
 
     def img2img(self, init_image, strength=None):
@@ -154,7 +155,7 @@ class Img2ImgSolver(BaseSolver):
         return img[0], {k: torch.cat(v) for k, v in logs.items()}
 
 if __name__ == "__main__":
-    home_dir = '/data/vision/torralba/scratch/aou/vision_project'
+    root_dir = '.'
     config = {
         'prompt': 'a clear photograph of a sitting pug puppy',
         'skip_grid': False,
@@ -169,11 +170,11 @@ if __name__ == "__main__":
         'strength': 0.5,
         'decay_rate': 0.99,
         'min_strength': 0.01,
-        'config': f'{home_dir}/stable_diffusion/v1-inference.yaml',
-        'ckpt': f'{home_dir}/stable_diffusion/model.ckpt',
+        'config': f'{root_dir}/stable_diffusion/v1-inference.yaml',
+        'ckpt': f'{root_dir}/stable_diffusion/model.ckpt',
         'seed': 42,
         'precision': 'autocast'
     }
-    init_filename = f'{home_dir}/classical_images/recovered_noisy_obs.jpeg'
+    init_filename = f'{root_dir}/classical_images/recovered_noisy_obs.jpeg'
     solver = Img2ImgSolver(config, None)
     solver.solve(init_filename)

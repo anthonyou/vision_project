@@ -3,7 +3,9 @@ import os
 from my_python_utils.common_utils import *
 from problems import problems
 from solvers import solvers
-from solvers.config import configs
+# from solvers.config import configs
+
+assert os.path.abspath(os.getcwd()).endswith('/vision_project'), "Should run from vision_project folder, all paths are encoded relatively to this folder (instead of absolute paths)"
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Main method')
@@ -12,6 +14,7 @@ if __name__ == '__main__':
   parser.add_argument('--problem-type', type=str, default='random_projection', choices=problems.keys())
   parser.add_argument('--solver-method', type=str, default='img2img', choices=solvers.keys())
   parser.add_argument('--seed', default=1337, type=int)
+  parser.add_argument('--gpu', default=0, type=int)
 
   # params for img2img solver, ignored if other method is used
   parser.add_argument("--steps", type=int, default=250, help="number of ddim sampling steps")
@@ -23,8 +26,12 @@ if __name__ == '__main__':
 
   problem = problems[args.problem_type](img=img, obs_size=img.shape[1:])
   obs = problem.forward()
-  config = configs[args.solver_method]
-  with torch.cuda.device(config['device']):
+  if args.solver_method == 'img2img':
+    from solvers.img2img import config as img2img_config
+    config = img2img_config
+  else:
+    config = None
+  with torch.cuda.device('cuda:{}'.format(args.gpu)):
     solver = solvers[args.solver_method](problem, config, verbose=True)
     reconstruction, logs = solver.solve()
 

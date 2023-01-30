@@ -48,7 +48,7 @@ class StochasticGradDescSolver(BaseSolver):
 if __name__ == "__main__":
     home_dir = '/data/vision/torralba/scratch/aou/vision_project'
     obs_filename = f'{home_dir}/classical_images/obs_with_extra_noise.npy'
-    # recovered_img = load_img(f'{home_dir}/med_dog.jpeg')[0]
+    recovered_img = load_img(f'{home_dir}/med_dog.jpeg')[0]
     print(recovered_img.shape)
  
     noisy_obs = torch.from_numpy(np.load(obs_filename))
