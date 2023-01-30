@@ -10,11 +10,11 @@ class StochasticGradDescSolver(BaseSolver):
     Solver using gradient descent to bring image closer to observation
     """
     
-    def __init__(self, problem, verbose=False):
+    def __init__(self, problem, config, verbose=False):
         super().__init__(problem, verbose)
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        self.loss_cutoff = 5000
-        self.lr = 0.005
+        self.loss_cutoff = config['loss_cutoff']
+        self.lr = config['learning_rate']
 
         A = problem.A_mat
         values, indices = torch.DoubleTensor(A.data), torch.LongTensor(np.vstack((A.row, A.col)))

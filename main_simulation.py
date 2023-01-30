@@ -32,8 +32,8 @@ if __name__ == '__main__':
   # you need to launch the following command, if it's not already running:
   # results are displayed in http://visiongpu09.csail.mit.edu:12890/, by selecting the corresponding visdom_environment
   
-  os.environ['VISDOM_HOST'] = 'visiongpu38'
-  visdom_environment = 'inverse_vision_' + os.environ['USER'] + '_' + config['device']
+  os.environ['VISDOM_HOST'] = 'visiongpu26'
+  visdom_environment = 'inverse_vision_' + os.environ['USER'] + '_' + str(config['device'])
 
   imshow(img, title='image', env=visdom_environment)
   imshow(obs, title='observation', env=visdom_environment)
