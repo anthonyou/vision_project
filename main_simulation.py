@@ -18,9 +18,14 @@ if __name__ == '__main__':
   parser.add_argument('--problem-type', type=str, default='random_projection', choices=problems.keys())
   parser.add_argument('--solver-method', type=str, default='img2img', choices=solvers.keys())
   parser.add_argument('--seed', default=42, type=int)
+  parser.add_argument('--iterations', default=101, type=int, help='how many iterations to run')
+  parser.add_argument('--loss-cutoff', default=5000, type=int, help='sgd loss cutoff')
+  parser.add_argument('--learning-rate', default=0.005, type=float, help='sgd leaarning rate')
 
   # params for img2img solver, ignored if other method is used
   parser.add_argument("--ddim-steps", type=int, default=50, help="number of ddim sampling steps")
+  parser.add_argument('--strength', default=0.5, type=float)
+  parser.add_argument('--decay-rate', default=0.99, type=float)
   parser.add_argument("--save-path", type=str, default='/data/vision/torralba/scratch/aou/vision_project/simulation_experiments', help="where to save results, leave empty to not save")
 
   args = parser.parse_args()
@@ -33,6 +38,11 @@ if __name__ == '__main__':
   config['solver_method'] = args.solver_method
   config['seed'] = args.seed
   config['ddim_steps'] = args.ddim_steps
+  config['iterations'] = args.iterations
+  config['loss_cutoff'] = args.loss_cutoff
+  config['learning_rate'] = args.learning_rate
+  config['strength'] = args.strength
+  config['decay_rate'] = args.decay_rate
 
   img = np.array(cv2_imread(args.img_file) / 255.0, dtype='float32')
   img = best_centercrop_image(img, args.img_size, args.img_size)

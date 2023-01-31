@@ -2,9 +2,9 @@ home_dir = '/data/vision/torralba/scratch/aou/vision_project'
 img2img_config = {
     'device': 0,
     'prompt': 'a clear photograph of a sitting pug puppy',
-    'iterations': 101,
+    'iterations': 11,
     'loss_cutoff': 50000,
-    'learning_rate': 0.0005,
+    'learning_rate': 0.005,
     'ddim_steps': 50,
     'ddim_eta': 0.0,
     'n_iter': 1,
