@@ -79,3 +79,11 @@ class BaseProblemTransferMatrix2DObsGaussianNoise(BaseProblem):
       # e.g. ridge regression
       raise Exception("To be implemented")
 
+  def init_sgd_forward(self, device):
+    A = self.A_mat
+    values, indices = torch.DoubleTensor(A.data), torch.LongTensor(np.vstack((A.row, A.col)))
+    self.A_torch = torch.sparse.DoubleTensor(indices, values, torch.Size(A.shape)).float()
+    self.A_torch = self.A_torch.to(device).requires_grad_(False)
+
+  def sgd_forward(self, img, obs_shape):
+    return torch.sparse.mm(self.A_torch, img.flatten().unsqueeze(0).T).view(obs_shape)

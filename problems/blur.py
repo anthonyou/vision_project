@@ -1,10 +1,11 @@
 from problems.base_problems import *
 from scipy import sparse
 import numpy as np
+import torch
 
 
 class BlurProblem(BaseProblem):
-  def __init__(self, obs=None, img=None, img_size=None, obs_size=None, N=10):
+  def __init__(self, obs=None, img=None, img_size=None, obs_size=None, N=20):
     super().__init__(obs=obs, img=img, img_size=img_size)
 
     if obs is None:
@@ -15,7 +16,9 @@ class BlurProblem(BaseProblem):
       assert obs_size[0] <= self.img_size[0] and obs_size[1] <= self.img_size[1]
 
     self.N = N
-    self.construct_A_mat()
+    self.convolver_A = torch.nn.Conv2d(self.C, self.C, N, padding='same', groups=self.C).requires_grad_(False)
+    torch.nn.init.constant_(self.convolver_A.weight, 1/N**2)
+    torch.nn.init.constant_(self.convolver_A.bias, 0)
 
   def construct_A_mat(self):
     x_coo, y_coo, data = [], [], []
@@ -36,10 +39,23 @@ class BlurProblem(BaseProblem):
     self.A_mat = sparse.coo_matrix((data, (x_coo, y_coo)), shape=(self.C*A_mat_H, self.C*A_mat_W))
     return self.A_mat
 
-  def forward(self):
+  def A_mat_forward(self):
     assert not self.img is None
     obs = self.A_mat @ (self.img.reshape(-1))
     return obs.reshape(self.C, *self.obs_size)
+
+  def forward(self):
+    assert not self.img is None
+    img = torch.from_numpy(self.img).unsqueeze(0)
+    with torch.no_grad():
+      obs = self.convolver_A(img)
+    return obs.squeeze().numpy()
+
+  def init_sgd_forward(self, device):
+    self.convolver_A.to(device)
+    
+  def sgd_forward(self, img, obs_shape):
+    return self.convolver_A(img).view(obs_shape)
 
 if __name__ == '__main__':
   img = np.array(cv2_imread('img_examples/pug.png'), dtype='float32')
@@ -48,5 +64,4 @@ if __name__ == '__main__':
   inverse_problem = BlurProblem(img=img, obs_size=img.shape[1:], N=3)
 
   obs = inverse_problem.forward()
-  print(inverse_problem.A_mat.todense()[0])
-
+  print(obs)
