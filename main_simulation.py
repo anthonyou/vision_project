@@ -13,19 +13,19 @@ from solvers.config import configs
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Main method')
   parser.add_argument("--device", type=int, default=0, help="what device to run experiment")
-  parser.add_argument("--img-file", type=str, default='img_examples/pug.png', help="img path to test")
+  parser.add_argument("--img-file", type=str, default='img_examples/dog.jpeg', help="img path to test")
   parser.add_argument('--img-size', type=int, default=512)
   parser.add_argument('--problem-type', type=str, default='random_projection', choices=problems.keys())
   parser.add_argument('--solver-method', type=str, default='img2img', choices=solvers.keys())
   parser.add_argument('--seed', default=42, type=int)
-  parser.add_argument('--iterations', default=101, type=int, help='how many iterations to run')
-  parser.add_argument('--loss-cutoff', default=5000, type=int, help='sgd loss cutoff')
-  parser.add_argument('--learning-rate', default=0.005, type=float, help='sgd leaarning rate')
+  parser.add_argument('--iterations', default=11, type=int, help='how many iterations to run')
+  parser.add_argument('--loss-cutoff', default=50000, type=int, help='sgd loss cutoff')
+  parser.add_argument('--learning-rate', default=0.0005, type=float, help='sgd leaarning rate')
 
   # params for img2img solver, ignored if other method is used
   parser.add_argument("--ddim-steps", type=int, default=50, help="number of ddim sampling steps")
   parser.add_argument('--strength', default=0.5, type=float)
-  parser.add_argument('--decay-rate', default=0.99, type=float)
+  parser.add_argument('--decay-rate', default=0.8, type=float)
   parser.add_argument("--save-path", type=str, default='/data/vision/torralba/scratch/aou/vision_project/simulation_experiments', help="where to save results, leave empty to not save")
 
   args = parser.parse_args()

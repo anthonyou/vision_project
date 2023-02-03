@@ -78,3 +78,4 @@ class BaseProblemTransferMatrix2DObsGaussianNoise(BaseProblem):
       # TODO: solve with regularization when it is underconstrained.
       # e.g. ridge regression
       raise Exception("To be implemented")
+
