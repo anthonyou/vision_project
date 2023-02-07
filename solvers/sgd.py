@@ -16,11 +16,6 @@ class StochasticGradDescSolver(BaseSolver):
         self.loss_cutoff = config['loss_cutoff']
         self.lr = config['learning_rate']
 
-        A = problem.A_mat
-        values, indices = torch.DoubleTensor(A.data), torch.LongTensor(np.vstack((A.row, A.col)))
-        self.A = torch.sparse.DoubleTensor(indices, values, torch.Size(A.shape)).float()
-
-
     def solve(self, img, obs):
         """
         img and obs are torch tensors and A is a torch sparse matrix
@@ -28,14 +23,13 @@ class StochasticGradDescSolver(BaseSolver):
         recovered_img = img.detach() # Need this line or else img will be overwritten
         recovered_img = recovered_img.to(self.device).requires_grad_(True)
         obs = obs.to(self.device).requires_grad_(False)
-        A = self.A.to(self.device).requires_grad_(False)
+        self.problem.init_sgd_forward(self.device)
 
         loss = float('inf')
         i = -1
         while loss > self.loss_cutoff:
             i += 1
-            recovered_obs = torch.sparse.mm(A, recovered_img.flatten().unsqueeze(0).T)
-            recovered_obs = recovered_obs.view(obs.shape)
+            recovered_obs = self.problem.sgd_forward(recovered_img, obs.shape)
             loss = torch.sum((recovered_obs - obs)**2)
             if i % 10 == 0:
                 print(loss)
