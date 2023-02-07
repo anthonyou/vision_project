@@ -19,30 +19,7 @@ from ldm.models.diffusion.plms import PLMSSampler
 from solvers.base_solver import BaseSolver
 from solvers.sgd import StochasticGradDescSolver
 
-# root_dir = '/data/vision/torralba/scratch/aou/vision_project'
-root_dir = '.'
-config = {
-    'prompt': 'a clear photograph of a sitting pug puppy',
-    'iterations': 101,
-    'loss_cutoff': 50000,
-    'learning_rate': 0.0005,
-    'skip_grid': False,
-    'ddim_steps': 50,
-    'fixed_code': False,
-    'ddim_eta': 0.0,
-    'n_iter': 1,
-    'C': 4,
-    'f': 8,
-    'n_samples': 1,
-    'scale': 5.0,
-    'strength': 0.4,
-    'decay_rate': 0.99,
-    'min_strength': 0.01,
-    'config': f'{root_dir}/stable_diffusion/v1-inference.yaml',
-    'ckpt': f'{root_dir}/stable_diffusion/model.ckpt',
-    'seed': 42,
-    'precision': 'autocast'
-}
+from my_python_utils.common_utils import *
 
 def load_model_from_config(config, ckpt, verbose=False):
     print(f"Loading model from {ckpt}")
@@ -92,13 +69,13 @@ class Img2ImgSolver(BaseSolver):
 
         self.sampler = DDIMSampler(self.model)
 
-        self.sgd = StochasticGradDescSolver(problem, verbose)
+        self.sgd = StochasticGradDescSolver(problem, config, verbose)
 
 
     def img2img(self, init_image, strength=None):
-        batch_size = config['n_samples']
+        batch_size = self.config['n_samples']
         n_rows = batch_size
-        prompt = config['prompt']
+        prompt = self.config['prompt']
         data = [batch_size * [prompt]]
         model = self.model
         print('Constructing generator that uses prompt:', data)
@@ -107,22 +84,22 @@ class Img2ImgSolver(BaseSolver):
         init_image = repeat(init_image, '1 ... -> b ...', b=batch_size)
         init_latent = model.get_first_stage_encoding(model.encode_first_stage(init_image))
 
-        self.sampler.make_schedule(ddim_num_steps=config['ddim_steps'], ddim_eta=config['ddim_eta'], verbose=self.verbose)
+        self.sampler.make_schedule(ddim_num_steps=self.config['ddim_steps'], ddim_eta=self.config['ddim_eta'], verbose=self.verbose)
         
         if strength is None:
             strength = self.config['strength']
         assert 0. <= strength <= 1.
-        t_enc = int(strength * config['ddim_steps'])
+        t_enc = int(strength * self.config['ddim_steps'])
 
-        precision_scope = autocast if config['precision'] == "autocast" else nullcontext
+        precision_scope = autocast if self.config['precision'] == "autocast" else nullcontext
         
         with torch.no_grad():
             with precision_scope("cuda"):
                 with model.ema_scope():
-                    for n in trange(config['n_iter'], desc="Sampling"):
+                    for n in trange(self.config['n_iter'], desc="Sampling"):
                         for prompts in tqdm(data, desc="data"):
                             uc = None
-                            if config['scale'] != 1.0:
+                            if self.config['scale'] != 1.0:
                                 uc = model.get_learned_conditioning(batch_size * [""])
                             if isinstance(prompts, tuple):
                                 prompts = list(prompts)
@@ -131,7 +108,7 @@ class Img2ImgSolver(BaseSolver):
                             # encode (scaled latent)
                             z_enc = self.sampler.stochastic_encode(init_latent, torch.tensor([t_enc]*batch_size).to(self.device))
                             # decode it
-                            samples = self.sampler.decode(z_enc, c, t_enc, unconditional_guidance_scale=config['scale'], unconditional_conditioning=uc,)
+                            samples = self.sampler.decode(z_enc, c, t_enc, unconditional_guidance_scale=self.config['scale'], unconditional_conditioning=uc,)
 
                             x_samples = model.decode_first_stage(samples)
                             x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
@@ -144,37 +121,20 @@ class Img2ImgSolver(BaseSolver):
         obs = torch.from_numpy(obs).unsqueeze(0)
         img = torch.zeros(obs.shape).to(self.device)
         logs = {'sgd_per_iter': [], 'img2img_per_iter': []}
-        for i in range(config['iterations']):
+        for i in range(self.config['iterations']):
             sgd_img = self.sgd.solve(img, obs)
             norm_img = torch.clamp(2*sgd_img-1, min=-1.0, max=1.0)
-            strength = max(config['strength']*(config['decay_rate']**i), config['min_strength'])
+            strength = max(self.config['strength']*(self.config['decay_rate']**i), self.config['min_strength'])
             img = self.img2img(norm_img, strength=strength).float()
-            if i % 10 == 0:
+            if i % self.config['log_frequency'] == 0:
                 logs['sgd_per_iter'].append(sgd_img)
                 logs['img2img_per_iter'].append(img)
         return img[0], {k: torch.cat(v) for k, v in logs.items()}
 
 if __name__ == "__main__":
-    root_dir = '.'
-    config = {
-        'prompt': 'a clear photograph of a sitting pug puppy',
-        'skip_grid': False,
-        'ddim_steps': 50,
-        'fixed_code': False,
-        'ddim_eta': 0.0,
-        'n_iter': 1,
-        'C': 4,
-        'f': 8,
-        'n_samples': 1,
-        'scale': 5.0,
-        'strength': 0.5,
-        'decay_rate': 0.99,
-        'min_strength': 0.01,
-        'config': f'{root_dir}/stable_diffusion/v1-inference.yaml',
-        'ckpt': f'{root_dir}/stable_diffusion/model.ckpt',
-        'seed': 42,
-        'precision': 'autocast'
-    }
+    from solvers.config import configs, root_dir
+    config = configs['img2img']
+
     init_filename = f'{root_dir}/classical_images/recovered_noisy_obs.jpeg'
     solver = Img2ImgSolver(config, None)
     solver.solve(init_filename)

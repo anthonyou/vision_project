@@ -3,7 +3,7 @@ import os
 from my_python_utils.common_utils import *
 from problems import problems
 from solvers import solvers
-# from solvers.config import configs
+from solvers.config import configs
 
 assert os.path.abspath(os.getcwd()).endswith('/vision_project'), "Should run from vision_project folder, all paths are encoded relatively to this folder (instead of absolute paths)"
 
@@ -26,11 +26,9 @@ if __name__ == '__main__':
 
   problem = problems[args.problem_type](img=img, obs_size=img.shape[1:])
   obs = problem.forward()
-  if args.solver_method == 'img2img':
-    from solvers.img2img import config as img2img_config
-    config = img2img_config
-  else:
-    config = None
+
+  config = configs[args.solver_method] if args.solver_method in configs.keys() else None
+
   with torch.cuda.device('cuda:{}'.format(args.gpu)):
     solver = solvers[args.solver_method](problem, config, verbose=True)
     reconstruction, logs = solver.solve()
@@ -39,8 +37,8 @@ if __name__ == '__main__':
   # you need to launch the following command, if it's not already running:
   # results are displayed in http://visiongpu09.csail.mit.edu:12890/, by selecting the corresponding visdom_environment
   
-  os.environ['VISDOM_HOST'] = 'visiongpu38'
-  visdom_environment = 'inverse_vision_' + os.environ['USER'] + '_' + config['device']
+  os.environ['VISDOM_HOST'] = 'visiongpu26'
+  visdom_environment = 'inverse_vision_' + os.environ['USER'] + '_' + str(config['device'])
 
   imshow(img, title='image', env=visdom_environment)
   imshow(obs, title='observation', env=visdom_environment)
