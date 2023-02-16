@@ -19,6 +19,8 @@ from ldm.models.diffusion.plms import PLMSSampler
 from solvers.base_solver import BaseSolver
 from solvers.sgd import StochasticGradDescSolver
 
+from my_python_utils.common_utils import *
+
 def load_model_from_config(config, ckpt, verbose=False):
     print(f"Loading model from {ckpt}")
     pl_sd = torch.load(ckpt, map_location="cpu")
@@ -57,7 +59,7 @@ class Img2ImgSolver(BaseSolver):
     """
 
     def __init__(self, problem, config, verbose=False):
-        super().__init__(problem, config, verbose)
+        super().__init__(problem, config=config, verbose=verbose)
         seed_everything(config['seed'])
         model_config = OmegaConf.load(config['config'])
         model = load_model_from_config(model_config, config['ckpt'])
@@ -134,3 +136,11 @@ class Img2ImgSolver(BaseSolver):
                 logs['sgd_per_iter'].append(sgd_img)
                 logs['img2img_per_iter'].append(img)
         return img[0], {k: torch.cat(v) for k, v in logs.items()}
+
+if __name__ == "__main__":
+    from solvers.config import configs, root_dir
+    config = configs['img2img']
+
+    init_filename = f'{root_dir}/classical_images/recovered_noisy_obs.jpeg'
+    solver = Img2ImgSolver(config, None)
+    solver.solve(init_filename)

@@ -1,4 +1,4 @@
-home_dir = '/data/vision/torralba/scratch/aou/vision_project'
+root_dir = '.'
 img2img_config = {
     'unconditioned': True,
     'device': 0,
@@ -17,5 +17,6 @@ img2img_config = {
     'config': f'{home_dir}/stable_diffusion/synthetic_model_config.yaml', #v1-inference.yaml',
     'ckpt': '/data/vision/torralba/movies_sfm/home/no_training_cnn/general_vision_prior/latent_diffusion/logs/2023-01-17T17-29-04_s21k_mixup-ldm-kl-32x32x4/checkpoints/last.ckpt', #f'{home_dir}/stable_diffusion/synthetic_model.ckpt',
     'seed': 42,
-    'precision': 'autocast'
+    'precision': 'autocast',
+    'log_frequency': 10
 }

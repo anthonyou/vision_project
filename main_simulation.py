@@ -10,13 +10,15 @@ from problems import problems
 from solvers import solvers
 from solvers.config import configs
 
+assert os.path.abspath(os.getcwd()).endswith('/vision_project'), "Should run from vision_project folder, all paths are encoded relatively to this folder (instead of absolute paths)"
+
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Main method')
-  parser.add_argument("--device", type=int, default=0, help="what device to run experiment")
   parser.add_argument("--img-file", type=str, default='img_examples/dog.jpeg', help="img path to test")
   parser.add_argument('--img-size', type=int, default=512)
   parser.add_argument('--problem-type', type=str, default='random_projection', choices=problems.keys())
   parser.add_argument('--solver-method', type=str, default='img2img', choices=solvers.keys())
+  parser.add_argument('--gpu', default=0, type=int)
   parser.add_argument('--seed', default=42, type=int)
   parser.add_argument('--iterations', default=11, type=int, help='how many iterations to run')
   parser.add_argument('--loss-cutoff', default=50000, type=int, help='sgd loss cutoff')
@@ -49,7 +51,10 @@ if __name__ == '__main__':
 
   problem = problems[args.problem_type](img=img, obs_size=img.shape[1:])
   obs = problem.forward()
-  with torch.cuda.device(args.device):
+
+
+  with torch.cuda.device('cuda:{}'.format(args.gpu)):
+    config = configs[args.solver_method] if args.solver_method in configs.keys() else None
     solver = solvers[args.solver_method](problem, config, verbose=True)
     reconstruction, logs = solver.solve()
 
