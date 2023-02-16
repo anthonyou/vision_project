@@ -2,7 +2,7 @@ import os
 import shutil
 import json
 
-os.environ['VISDOM_HOST'] = 'visiongpu29'
+os.environ['VISDOM_HOST'] = 'visiongpu37'
 
 from my_python_utils.common_utils import *
 from matplotlib.pyplot import imsave

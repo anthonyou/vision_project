@@ -96,12 +96,16 @@ class Img2ImgSolver(BaseSolver):
                 with model.ema_scope():
                     for n in trange(self.config['n_iter'], desc="Sampling"):
                         for prompts in tqdm(data, desc="data"):
-                            uc = None
-                            if self.config['scale'] != 1.0:
-                                uc = model.get_learned_conditioning(batch_size * [""])
-                            if isinstance(prompts, tuple):
-                                prompts = list(prompts)
-                            c = model.get_learned_conditioning(prompts)
+                            if not self.config['unconditioned']:
+                                uc = None
+                                if self.config['scale'] != 1.0:
+                                    uc = model.get_learned_conditioning(batch_size * [""])
+                                if isinstance(prompts, tuple):
+                                    prompts = list(prompts)
+                                c = model.get_learned_conditioning(prompts)
+                            else:
+                                c = None
+                                uc = None
 
                             # encode (scaled latent)
                             z_enc = self.sampler.stochastic_encode(init_latent, torch.tensor([t_enc]*batch_size).to(self.device))
@@ -109,6 +113,7 @@ class Img2ImgSolver(BaseSolver):
                             samples = self.sampler.decode(z_enc, c, t_enc, unconditional_guidance_scale=self.config['scale'], unconditional_conditioning=uc,)
 
                             x_samples = model.decode_first_stage(samples)
+                            print(torch.sum(torch.isnan(x_samples)))
                             x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
         toc = time.time()
         return x_samples
