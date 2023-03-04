@@ -12,25 +12,33 @@ class StochasticGradDescSolver(BaseSolver):
     
     def __init__(self, problem, config, verbose=False):
         super().__init__(problem, verbose)
+        if self.problem.tensor_type != 'torch':
+            self.problem.init_torch()
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.loss_cutoff = config['loss_cutoff']
         self.lr = config['learning_rate']
 
-    def solve(self, img, obs):
+    def solve(self, img=None, obs=None):
         """
         img and obs are torch tensors and A is a torch sparse matrix
         """
+        if img is None:
+            assert self.problem.img is not None
+            img = self.problem.img
+        if obs is None
+            assert self.problem.obs is not None
+            obs = self.problem.obs
+        batch_size = img.shape[0]
         recovered_img = img.detach() # Need this line or else img will be overwritten
         recovered_img = recovered_img.to(self.device).requires_grad_(True)
         obs = obs.to(self.device).requires_grad_(False)
-        self.problem.init_sgd_forward(self.device)
 
         loss = float('inf')
         i = -1
         while loss > self.loss_cutoff:
             i += 1
-            recovered_obs = self.problem.sgd_forward(recovered_img, obs.shape)
-            loss = torch.sum((recovered_obs - obs)**2)
+            recovered_obs = self.problem.torch_forward(recovered_img, obs.shape)
+            loss = torch.sum((recovered_obs - obs)**2) / batch_size
             if i % 10 == 0:
                 print(loss)
             loss.backward(retain_graph=True)

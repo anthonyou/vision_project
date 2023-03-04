@@ -37,6 +37,7 @@ class PinholeProblem(BaseProblemTransferMatrix2DObsGaussianNoise):
   def construct_A_mat(self):
     x_coo, y_coo, data = [], [], []
 
+    assert self.img_size == self.obs_size, "For pinhole, obs and img must be same size"
     img_H, img_W = self.img_size
     obs_H, obs_W = self.obs_size
     A_mat_H, A_mat_W = obs_H*obs_W, img_H*img_W

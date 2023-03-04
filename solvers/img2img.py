@@ -41,18 +41,6 @@ def load_model_from_config(config, ckpt, verbose=False):
     return model
 
 
-def load_img(path):
-    image = Image.open(path).convert("RGB")
-    w, h = image.size
-    print(f"loaded input image of size ({w}, {h}) from {path}")
-    w, h = map(lambda x: x - x % 32, (w, h))  # resize to integer multiple of 32
-    image = image.resize((w, h), resample=PIL.Image.LANCZOS)
-    image = np.array(image).astype(np.float32) / 255.0
-    image = image[None].transpose(0, 3, 1, 2)
-    image = torch.from_numpy(image)
-    return 2.*image - 1.
-
-
 class Img2ImgSolver(BaseSolver):
     """
     Solver using stablediffusion's img2img
@@ -73,7 +61,7 @@ class Img2ImgSolver(BaseSolver):
 
 
     def img2img(self, init_image, strength=None):
-        batch_size = self.config['n_samples']
+        batch_size = init_image.shape[0]
         n_rows = batch_size
         prompt = self.config['prompt']
         data = [batch_size * [prompt]]
@@ -81,7 +69,6 @@ class Img2ImgSolver(BaseSolver):
         print('Constructing generator that uses prompt:', data)
 
         init_image = init_image.to(self.device)
-        init_image = repeat(init_image, '1 ... -> b ...', b=batch_size)
         init_latent = model.get_first_stage_encoding(model.encode_first_stage(init_image))
 
         self.sampler.make_schedule(ddim_num_steps=self.config['ddim_steps'], ddim_eta=self.config['ddim_eta'], verbose=self.verbose)
@@ -115,15 +102,22 @@ class Img2ImgSolver(BaseSolver):
                             samples = self.sampler.decode(z_enc, c, t_enc, unconditional_guidance_scale=self.config['scale'], unconditional_conditioning=uc,)
 
                             x_samples = model.decode_first_stage(samples)
-                            print(torch.sum(torch.isnan(x_samples)))
                             x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
         toc = time.time()
         return x_samples
 
-    def solve(self, obs=None):
-        if obs is None:
-            obs = self.problem.forward()
-        obs = torch.from_numpy(obs).unsqueeze(0)
+    def solve(self, baseline_img=None, obs=None):
+        if self.problem.tensor_type != 'torch':
+            self.problem.init_torch(self.device)
+        if baseline_img is None:
+            baseline_img = self.problem.img
+        else:
+            baseline_img = baseline_img.to(self.device)
+        assert len(baseline_img.shape) == 4, "shape must be (batch, channel, height, width)" 
+        if obs is None and self.obs is None:
+            obs = self.problem.get_obs(init_img)
+        elif obs is None:
+            obs = self.obs
         img = torch.zeros(obs.shape).to(self.device)
         logs = {'sgd_per_iter': [], 'img2img_per_iter': []}
         save_period = max(self.config['iterations'] // 10, 1)
@@ -131,11 +125,14 @@ class Img2ImgSolver(BaseSolver):
             sgd_img = self.sgd.solve(img, obs)
             norm_img = torch.clamp(2*sgd_img-1, min=-1.0, max=1.0)
             strength = max(self.config['strength']*(self.config['decay_rate']**i), self.config['min_strength'])
-            img = self.img2img(norm_img, strength=strength).float()
+            if strength > 0:
+                img = self.img2img(norm_img, strength=strength).float()
+            else:
+                img = sgd_img
             if i % save_period == 0:
                 logs['sgd_per_iter'].append(sgd_img)
                 logs['img2img_per_iter'].append(img)
-        return img[0], {k: torch.cat(v) for k, v in logs.items()}
+        return img, {k: torch.cat(v) for k, v in logs.items()}, obs
 
 if __name__ == "__main__":
     from solvers.config import configs, root_dir
