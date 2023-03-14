@@ -12,9 +12,9 @@ class StochasticGradDescSolver(BaseSolver):
     
     def __init__(self, problem, config, verbose=False):
         super().__init__(problem, verbose)
-        if self.problem.tensor_type != 'torch':
-            self.problem.init_torch()
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        if self.problem.tensor_type != 'torch':
+            self.problem.init_torch(self.device)
         self.loss_cutoff = config['loss_cutoff']
         self.lr = config['learning_rate']
 
@@ -25,7 +25,7 @@ class StochasticGradDescSolver(BaseSolver):
         if img is None:
             assert self.problem.img is not None
             img = self.problem.img
-        if obs is None
+        if obs is None:
             assert self.problem.obs is not None
             obs = self.problem.obs
         batch_size = img.shape[0]

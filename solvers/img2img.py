@@ -114,8 +114,8 @@ class Img2ImgSolver(BaseSolver):
         else:
             baseline_img = baseline_img.to(self.device)
         assert len(baseline_img.shape) == 4, "shape must be (batch, channel, height, width)" 
-        if obs is None and self.obs is None:
-            obs = self.problem.get_obs(init_img)
+        if obs is None and self.problem.obs is None:
+            obs = self.problem.get_obs(baseline_img)
         elif obs is None:
             obs = self.obs
         img = torch.zeros(obs.shape).to(self.device)
