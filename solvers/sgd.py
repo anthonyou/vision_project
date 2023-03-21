@@ -11,12 +11,13 @@ class StochasticGradDescSolver(BaseSolver):
     """
     
     def __init__(self, problem, config, verbose=False):
-        super().__init__(problem, verbose)
+        super().__init__(problem, config, verbose)
         if self.problem.tensor_type != 'torch':
             self.problem.init_torch()
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.loss_cutoff = config['loss_cutoff']
         self.lr = config['learning_rate']
+        self.max_iters = config['max_sgd_iters']
 
     def solve(self, img=None, obs=None):
         """
@@ -25,25 +26,27 @@ class StochasticGradDescSolver(BaseSolver):
         if img is None:
             assert self.problem.img is not None
             img = self.problem.img
-        if obs is None
+        if obs is None:
             assert self.problem.obs is not None
             obs = self.problem.obs
-        batch_size = img.shape[0]
         recovered_img = img.detach() # Need this line or else img will be overwritten
         recovered_img = recovered_img.to(self.device).requires_grad_(True)
         obs = obs.to(self.device).requires_grad_(False)
 
         loss = float('inf')
-        i = -1
-        while loss > self.loss_cutoff:
+        i = 0
+        optim = torch.optim.Adam(lr=self.lr, params=[recovered_img])
+        while loss > self.loss_cutoff and i < self.max_iters:
+            recovered_obs = self.problem.forward(recovered_img)
+            loss = torch.mean((recovered_obs - obs)**2)
+            if i % 10 == 0 and self.verbose:
+                print('SGD loss it {} = {}'.format(i, loss))
+            optim.zero_grad()
+            loss.backward()
+            optim.step()
+
             i += 1
-            recovered_obs = self.problem.torch_forward(recovered_img, obs.shape)
-            loss = torch.sum((recovered_obs - obs)**2) / batch_size
-            if i % 10 == 0:
-                print(loss)
-            loss.backward(retain_graph=True)
-            recovered_img.data = recovered_img.data - self.lr * recovered_img.grad.data
-            recovered_img.grad.zero_()
+
         return recovered_img
 
 

@@ -7,7 +7,7 @@ from my_python_utils.common_utils import *
 # Base class that defines all problems
 class BaseProblem():
   # class to be inherited by other problems
-  def __init__(self, img=None, obs=None, img_size=None):
+  def __init__(self, img=None, obs=None, img_size=None, obs_size=None):
      # assert (img is None) + (obs is None) == 1, "Either img (for simulation) or obs (for real data) should be provided!"
 
     self.img = img
@@ -41,6 +41,9 @@ class BaseProblem():
   def explicit_solve(self):
     raise Exception("Must be implemented by children class")
 
+  def init_torch(self, device='cuda'):
+    return
+
 # Problem that is defined by a linear transfer matrix, with 2D observations
 class BaseProblemTransferMatrix2DObsGaussianNoise(BaseProblem):
   def __init__(self, obs=None, img=None, img_size=None, obs_size=None, gaussian_noise_std=0.1):
@@ -57,16 +60,6 @@ class BaseProblemTransferMatrix2DObsGaussianNoise(BaseProblem):
 
   def construct_A_mat(self):
     raise Exception("Needs to be implemented by base class")
-
-  def forward(self):
-    assert not self.img is None
-    noiseless_obs = self.A_mat @ (self.img.reshape(-1))
-    if self.gaussian_noise_std > 0:
-      obs = noiseless_obs + np.random.normal(scale=self.gaussian_noise_std, size=noiseless_obs.shape)
-    else:
-      obs = noiseless_obs
-    obs = obs.reshape(self.C, *self.obs_size)
-    return obs
 
   def explicit_solve(self):
     if self.obs_size == self.img_size:
@@ -100,7 +93,7 @@ class BaseProblemTransferMatrix2DObsGaussianNoise(BaseProblem):
     obs = obs.reshape(batch_size, self.C, *self.obs_size)
     return obs
     
-  def init_torch(self, device):
+  def init_torch(self, device='cuda'):
     A = self.A_mat
     self.device = device
     values, indices = torch.DoubleTensor(A.data), torch.LongTensor(np.vstack((A.row, A.col)))
@@ -113,6 +106,21 @@ class BaseProblemTransferMatrix2DObsGaussianNoise(BaseProblem):
         self.obs = torch.from_numpy(self.obs).to(device).unsqueeze(0)
     self.tensor_type = 'torch'
 
-  def torch_forward(self, batch_img, obs_shape):
+  def forward(self, batch_img):
+    if type(batch_img) is torch.FloatTensor:
+      return self.forward_torch(batch_img)
+    else:
+      return self.forward_numpy(batch_img)
+
+  def forward_numpy(self, img):
+    noiseless_obs = self.A_mat @ (img.reshape(-1))
+    if self.gaussian_noise_std > 0:
+      obs = noiseless_obs + np.random.normal(scale=self.gaussian_noise_std, size=noiseless_obs.shape)
+    else:
+      obs = noiseless_obs
+    obs = obs.reshape(self.C, *self.obs_size)
+    return obs
+
+  def forward_torch(self, batch_img):
     flatten_img = torch.stack([img.flatten() for img in batch_img]).T
-    return torch.sparse.mm(self.A_torch, flatten_img).T.view(obs_shape)
+    return torch.sparse.mm(self.A_torch, flatten_img).T.view(self.obs_size)

@@ -5,3 +5,6 @@ class BaseSolver():
     self.problem = problem
     self.verbose = verbose
     self.config = config
+
+  def init_torch(self):
+    return

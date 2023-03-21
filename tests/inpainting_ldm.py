@@ -249,14 +249,9 @@ if __name__ == "__main__":
       imshow(final_img.mean(0) * (1 - full_image_mask) + (masked_image + 1 ) * 0.5, title='mean_recons_masked')
 
 
-
 # Code for conditional inpainting
   '''
-
-  
-
   '''
-
 
 
 '''

@@ -18,6 +18,10 @@ from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
 from solvers.base_solver import BaseSolver
 from solvers.sgd import StochasticGradDescSolver
+from collections import defaultdict
+
+import ldm.models.diffusion.plms as ldm_plms_package
+assert '/'.join(ldm_plms_package.__file__.split('/')[-6:-4]), "ldm package not loaded from dependencies folder, this will cause problems when instantiating stable diffusion models"
 
 from my_python_utils.common_utils import *
 
@@ -28,6 +32,7 @@ def load_model_from_config(config, ckpt, verbose=False):
         print(f"Global Step: {pl_sd['global_step']}")
     sd = pl_sd["state_dict"]
     model = instantiate_from_config(config.model)
+
     m, u = model.load_state_dict(sd, strict=False)
     if len(m) > 0 and verbose:
         print("missing keys:")
@@ -58,7 +63,7 @@ class Img2ImgSolver(BaseSolver):
         self.sampler = DDIMSampler(self.model)
 
         self.sgd = StochasticGradDescSolver(problem, config, verbose)
-
+        self.verbose = verbose
 
     def img2img(self, init_image, strength=None):
         batch_size = init_image.shape[0]
@@ -84,7 +89,7 @@ class Img2ImgSolver(BaseSolver):
             with precision_scope("cuda"):
                 with model.ema_scope():
                     for n in trange(self.config['n_iter'], desc="Sampling"):
-                        for prompts in tqdm(data, desc="data"):
+                        for prompts in tqdm(data, desc="data", disable=not self.verbose):
                             if not self.config['unconditioned']:
                                 uc = None
                                 if self.config['scale'] != 1.0:
@@ -99,6 +104,8 @@ class Img2ImgSolver(BaseSolver):
                             # encode (scaled latent)
                             z_enc = self.sampler.stochastic_encode(init_latent, torch.tensor([t_enc]*batch_size).to(self.device))
                             # decode it
+                            # unconditional_guidance_scale is the ratio between what the conditional model and the unconditional, since we use both
+                            # the same (c == uc), doesn't make a difference
                             samples = self.sampler.decode(z_enc, c, t_enc, unconditional_guidance_scale=self.config['scale'], unconditional_conditioning=uc,)
 
                             x_samples = model.decode_first_stage(samples)
@@ -113,26 +120,31 @@ class Img2ImgSolver(BaseSolver):
             baseline_img = self.problem.img
         else:
             baseline_img = baseline_img.to(self.device)
+        if len(baseline_img.shape) == 3:
+            # add batch dimension
+            baseline_img = baseline_img[None,...]
         assert len(baseline_img.shape) == 4, "shape must be (batch, channel, height, width)" 
-        if obs is None and self.obs is None:
-            obs = self.problem.get_obs(init_img)
-        elif obs is None:
-            obs = self.obs
-        img = torch.zeros(obs.shape).to(self.device)
-        logs = {'sgd_per_iter': [], 'img2img_per_iter': []}
+        if obs is None:
+            obs = torch.FloatTensor(self.problem.get_obs(baseline_img)).to(self.device)
+        img = obs.mean() + obs.std() * torch.randn(obs.shape).to(self.device)
+        logs = defaultdict(list)
         save_period = max(self.config['iterations'] // 10, 1)
-        for i in range(self.config['iterations']):
+        for i in tqdm(range(self.config['iterations']), disable=not self.verbose):
             sgd_img = self.sgd.solve(img, obs)
             norm_img = torch.clamp(2*sgd_img-1, min=-1.0, max=1.0)
-            strength = max(self.config['strength']*(self.config['decay_rate']**i), self.config['min_strength'])
+            strength = max(self.config['strength']*(self.config['decay_rate']**i),
+                           self.config['min_strength'])
             if strength > 0:
                 img = self.img2img(norm_img, strength=strength).float()
             else:
                 img = sgd_img
+            # img is already normalized back to [0, 1] in self.img2img
+            # img = (img + 1.0) / 2.0
             if i % save_period == 0:
                 logs['sgd_per_iter'].append(sgd_img)
                 logs['img2img_per_iter'].append(img)
-        return img, {k: torch.cat(v) for k, v in logs.items()}, obs
+                logs['iter_count'].append(i)
+        return img, logs, obs
 
 if __name__ == "__main__":
     from solvers.config import configs, root_dir
