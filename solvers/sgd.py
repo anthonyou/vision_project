@@ -11,10 +11,10 @@ class StochasticGradDescSolver(BaseSolver):
     """
     
     def __init__(self, problem, config, verbose=False):
-        super().__init__(problem, config, verbose)
-        if self.problem.tensor_type != 'torch':
-            self.problem.init_torch()
+        super().__init__(problem, verbose)
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        if self.problem.tensor_type != 'torch':
+            self.problem.init_torch(self.device)
         self.loss_cutoff = config['loss_cutoff']
         self.lr = config['learning_rate']
         self.max_iters = config['max_sgd_iters']
